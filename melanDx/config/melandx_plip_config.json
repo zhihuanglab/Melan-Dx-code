@@ -1,0 +1,54 @@
+{
+    "data_config": {
+        "train_data_path": "data_for_train/dataset_manually_who.json",
+        "val_data_path": "data_for_train/dataset_manually_who.json",
+        "test_data_path": "data_for_train/dataset_manually_who.json",
+        "knowledge_data_path": "pathology_knowledge_all.json",
+        "root_train_path": "Projects/VLM/Atlas",  
+        "root_val_path": "Projects/VLM/Atlas",
+        "root_test_path": "Projects/VLM/Atlas",
+        "max_pixel_size": 40960,
+        "min_images_per_disease": 3,
+        "required_disease_level": 4,
+        "enforce_test_train_disease_match": true,
+        "output_distribution": true,
+        "distribution_output_dir": "dataset_stats",
+        "metadata_output_dir": "metadata",
+        "metadata_filename": "dataset_metadata.json",
+        "force_preprocess": true
+    },
+
+
+    "model_config": {
+        "embed_dim": 512,
+        "num_heads": 8,
+        "dropout_rate": 0.1,
+        "logit_scale_init_value": 2.6592,
+        "num_hidden_layers": 12,
+        "image_retrieval_number": 3,
+        "knowledge_retrieval_number": 3,
+        "device": "cuda",
+        "fusion_model": "weighted"
+    },
+
+    "trainer_config": {
+        "num_epochs": 20,
+        "batch_size": 64,
+        "learning_rate": 1e-5,
+        "weight_decay": 1e-2,
+        "scheduler_factor": 0.1,
+        "scheduler_patience": 50000,
+        "eval_steps": 500000,  
+        "embedding_update_steps": 500000,  
+        "save_dir": "VLM_musk_model",
+        "wandb_login": "wandb_login",
+        "wandb_project": "VLM_experiment",
+        "wandb_name": "VLM_musk_model",
+        "wandb_notes": "experiment",
+        "use_wandb": true,
+        "backbone_batch_size": 64,
+        "test_train_disease_match": true  
+    }
+
+
+}
