@@ -84,21 +84,18 @@ def main():
     
     # Set number of training epochs
     trainer_config.num_epochs = 100   
-    model_config.num_hidden_layers = 12
+    model_config.num_hidden_layers = 8
     
     model_config.image_retrieval_number = 2
     model_config.knowledge_retrieval_number = 2
     
     # Set whether to use projection layer
-    model_config.use_projection = False
+    model_config.use_projection = True
     trainer_config.batch_size = 64
     # Set loss type
     model_config.loss_type = args.loss_type
     
-    # Set bootstrap configuration (set directly in code, not using command line arguments)
-    trainer_config.use_bootstrap = True
-    trainer_config.bootstrap_n_samples = 10
-    trainer_config.bootstrap_sample_ratio = 0.8
+
     ############################################################
     
     

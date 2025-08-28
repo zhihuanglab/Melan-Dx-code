@@ -31,9 +31,7 @@ class TrainerConfig:
     use_wandb: bool = True
     backbone_batch_size: int = 40
     test_train_disease_match: bool = True 
-    use_bootstrap: bool = True 
-    bootstrap_n_samples: int = 10  
-    bootstrap_sample_ratio: float = 0.8  
+
 
 
 
@@ -473,126 +471,7 @@ class ModelTrainer:
                 
         return 0.0
 
-    def bootstrap_sample_indices(self, total_samples: int, sample_ratio: float = 0.8, seed: int = None) -> np.ndarray:
 
-
-        n_samples = int(total_samples * sample_ratio)
-        return np.random.choice(total_samples, size=n_samples, replace=True)
-
-    def calculate_bootstrap_metrics(
-            self,
-            all_preds: np.ndarray,
-            all_labels: np.ndarray,
-            all_probs: np.ndarray,
-            all_paths: List[str],
-            n_bootstrap: int = 10,
-            sample_ratio: float = 0.8
-    ) -> Dict[str, Any]:
-
-        total_samples = len(all_preds)
-        bootstrap_results = {
-            'bootstrap_indices': [],  
-            'bootstrap_metrics': []  
-        }
-        
-        for i in range(n_bootstrap):
-            bootstrap_indices = self.bootstrap_sample_indices(
-                total_samples, 
-                sample_ratio
-            )
-            
-
-            bootstrap_preds = all_preds[bootstrap_indices]
-            bootstrap_labels = all_labels[bootstrap_indices]
-            bootstrap_probs = all_probs[bootstrap_indices]
-            bootstrap_paths = [all_paths[idx] for idx in bootstrap_indices]
-            
-
-            bootstrap_correct = {'top1': 0, 'top3': 0, 'top5': 0, 'top10': 0}
-            hierarchy_accuracy_sum = 0.0
-            
-
-            top_k_indices = np.argsort(bootstrap_probs, axis=1)[:, -10:][:, ::-1]
-            
-            for j, true_idx in enumerate(bootstrap_labels):
-
-                if true_idx == top_k_indices[j, 0]:
-                    bootstrap_correct['top1'] += 1
-                if true_idx in top_k_indices[j, :3]:
-                    bootstrap_correct['top3'] += 1
-                if true_idx in top_k_indices[j, :5]:
-                    bootstrap_correct['top5'] += 1
-                if true_idx in top_k_indices[j, :10]:
-                    bootstrap_correct['top10'] += 1
-                
-
-                pred_disease = self.model.idx_to_disease[top_k_indices[j, 0]]
-                true_disease = self.model.idx_to_disease[true_idx]
-                
-                hierarchy_score = self.calculate_hierarchy_accuracy(
-                    pred_disease,
-                    true_disease,
-                    self.model.disease_to_parent,
-                    parent_to_grandparent=getattr(self.model, 'parent_to_grandparent', None)
-                )
-                hierarchy_accuracy_sum += hierarchy_score
-            
-
-            f1_weighted = f1_score(bootstrap_labels, bootstrap_preds, average='weighted', zero_division=0)
-            f1_macro = f1_score(bootstrap_labels, bootstrap_preds, average='macro', zero_division=0)
-            precision_weighted = precision_score(bootstrap_labels, bootstrap_preds, average='weighted', zero_division=0)
-            precision_macro = precision_score(bootstrap_labels, bootstrap_preds, average='macro', zero_division=0)
-            recall_weighted = recall_score(bootstrap_labels, bootstrap_preds, average='weighted', zero_division=0)
-            recall_macro = recall_score(bootstrap_labels, bootstrap_preds, average='macro', zero_division=0)
-            
-
-            n_classes = len(self.model.disease_to_idx)
-            conf_matrix = confusion_matrix(
-                bootstrap_labels, 
-                bootstrap_preds,
-                labels=list(range(n_classes))
-            )
-            
-            specificities = []
-            class_weights = []
-            
-            for k in range(n_classes):
-                class_weight = np.sum(bootstrap_labels == k)
-                class_weights.append(class_weight)
-                
-                if class_weight > 0:
-                    true_neg = conf_matrix.sum() - conf_matrix[k,:].sum() - conf_matrix[:,k].sum() + conf_matrix[k,k]
-                    false_pos = conf_matrix[:,k].sum() - conf_matrix[k,k]
-                    specificity = true_neg / (true_neg + false_pos) if (true_neg + false_pos) != 0 else 0
-                else:
-                    specificity = 0
-                
-                specificities.append(specificity)
-            
-            specificity_macro = np.mean(specificities)
-            specificity_weighted = (np.array(specificities) * np.array(class_weights)).sum() / np.sum(class_weights) if np.sum(class_weights) > 0 else 0.0
-            
-
-            bootstrap_metrics = {
-                "top1_accuracy": bootstrap_correct['top1'] / len(bootstrap_indices),
-                "top3_accuracy": bootstrap_correct['top3'] / len(bootstrap_indices),
-                "top5_accuracy": bootstrap_correct['top5'] / len(bootstrap_indices),
-                "top10_accuracy": bootstrap_correct['top10'] / len(bootstrap_indices),
-                "hierarchy_accuracy": hierarchy_accuracy_sum / len(bootstrap_indices),
-                "f1_weighted": f1_weighted,
-                "f1_macro": f1_macro,
-                "precision_weighted": precision_weighted,
-                "precision_macro": precision_macro,
-                "recall_weighted": recall_weighted,
-                "recall_macro": recall_macro,
-                "specificity_macro": specificity_macro,
-                "specificity_weighted": specificity_weighted
-            }
-            
-            bootstrap_results['bootstrap_indices'].append(bootstrap_indices.tolist())
-            bootstrap_results['bootstrap_metrics'].append(bootstrap_metrics)
-        
-        return bootstrap_results
 
     def evaluate(
             self,
@@ -756,16 +635,7 @@ class ModelTrainer:
         lr_str = self._format_lr_for_filename(self.config.learning_rate)
         
 
-        bootstrap_results = None
-        if self.config.use_bootstrap:
-            bootstrap_results = self.calculate_bootstrap_metrics(
-                all_preds=all_preds,
-                all_labels=all_labels,
-                all_probs=np.array(all_probs),
-                all_paths=all_paths,
-                n_bootstrap=self.config.bootstrap_n_samples,
-                sample_ratio=self.config.bootstrap_sample_ratio
-            )
+
         
 
         prediction_results = {
@@ -777,9 +647,7 @@ class ModelTrainer:
         }
         
 
-        if bootstrap_results is not None:
-            prediction_results['bootstrap_results'] = bootstrap_results
-        
+
 
         save_path = os.path.join(
             predictions_dir,

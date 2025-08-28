@@ -529,10 +529,10 @@ class LossModule(nn.Module):
         know_to_img_loss = self.cross_entropy(know_to_img_sim, torch.argmax(labels_matrix, dim=1))
         
         # Combine contrastive losses
-        # global_contrastive_loss = (img_to_know_loss + know_to_img_loss) / 2.0
+        global_contrastive_loss = (img_to_know_loss + know_to_img_loss) / 2.0
         
         # Total loss = local_weight*original_loss + global_weight*global_contrastive_loss
-        total_loss = original_loss + self.global_contrast_weight_1 * img_to_know_loss + self.global_contrast_weight_2 * know_to_img_loss
+        total_loss = original_loss + 0.1 * global_contrastive_loss
         
         # Compute accuracy (still based on original task)
         predictions = torch.argmax(flattened_similarities, dim=1)  # (batch_size,)
