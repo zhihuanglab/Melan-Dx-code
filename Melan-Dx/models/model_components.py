@@ -176,9 +176,9 @@ class EmbeddingSelector(nn.Module):
         total_queries = query_embeddings.size(0)
 
         # Step 1: Create num_classes index sequence, repeat class indices by k_img
-        class_indices = torch.arange(self.num_classes, device=self.config.device).repeat_interleave(self.config.k_img)
+        class_indices = torch.arange(self.num_classes, device=self.config.device).repeat_interleave(self.config.image_retrieval_number)
         # Step 2: Repeat by batch_size to get batch_size*num_classes*k_img long sequence
-        class_indices = class_indices.repeat(total_queries //(self.num_classes * self.config.k_img))
+        class_indices = class_indices.repeat(total_queries //(self.num_classes * self.config.image_retrieval_number))
 
         # Initialize result tensors
         result_indices = torch.zeros(
