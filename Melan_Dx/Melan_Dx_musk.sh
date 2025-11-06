@@ -1,28 +1,17 @@
 #!/bin/bash
-#SBATCH --propagate=NONE
-#SBATCH --output=logs/run_musk_finetune_output_%j.txt
-#SBATCH --error=logs/run_musk_finetune_error_%j.txt
-#SBATCH --gpus-per-node=a100
-#SBATCH --cpus-per-gpu=4
-#SBATCH --mem-per-gpu=64G
-#SBATCH --time=47:59:00
-#SBATCH --partition=ltdai
-
-
-nvidia-smi
 
 eval "$(conda shell.bash hook)"
-conda activate llava
+conda activate melandx
 
 # Configuration parameters
 CONFIG_PATH="config/melandx_musk_config.json"
-TRAIN_EMBEDDING="/cbica/home/yaoji/Projects/VLM_4_26/基础算法/2_musk_embeddings/train_embeddings.pt"
-VAL_EMBEDDING="/cbica/home/yaoji/Projects/VLM_4_26/基础算法/2_musk_embeddings/val_embeddings.pt"
-TEST_EMBEDDING="/cbica/home/yaoji/Projects/VLM_4_26/基础算法/2_musk_embeddings/test_embeddings.pt"
-KNOWLEDGE_EMBEDDING="/cbica/home/yaoji/Projects/VLM_4_26/基础算法/2_musk_embeddings/knowledge_embeddings.pt"
+TRAIN_EMBEDDING="/xxx/xxx/train_embeddings.pt"
+VAL_EMBEDDING="/xxx/xxx/val_embeddings.pt"
+TEST_EMBEDDING="/xxx/xxx/test_embeddings.pt"
+KNOWLEDGE_EMBEDDING="/xxx/xxx/knowledge_embeddings.pt"
 TREE_JSON_PATH="config/who_44_classes_tree.json"
 LOSS_TYPE="basic"
-SAVE_DIR="VLM_musk_model_weighted"
+SAVE_DIR="melandx_musk_model_results"
 
 # Model training (directly from saved embeddings)
 echo "Starting model training from saved embeddings..."
