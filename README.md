@@ -1,139 +1,201 @@
-# Melan-Dx Code
-The MUSK model embeddings for knowledge and images are available [here](https://drive.google.com/file/d/1zEYjr8QB7oy3TK9-7HZSQq9N3pYfmLA5/view?usp=sharing).
+# Melan-Dx Training Framework
+
+A training framework for melanocytic neoplasm classification using pre-computed embeddings and hierarchical disease taxonomy.
+
+## Overview
+
+This version allows you to **train directly from pre-computed embedding files** without data preprocessing or embedding generation steps.
 
 
-## Project Structure
+## Input File Requirements
 
-### Root Directory
+### 1. Embedding Files (Required)
 
-#### `train_model.py`
-Main entry point for the entire training pipeline. Handles:
-- Command-line argument parsing
-- Configuration loading
-- Three-stage execution flow: preprocessing, embedding generation, and model training
-- Backbone model initialization (PLIP, MUSK, etc.)
-- Coordination between data processing, embedding generation, and model training
-- Multi-learning rate experiment management
+Four `.pt` files, each containing:
+- `embeddings`: torch.Tensor with shape `(N, embed_dim)`
+- `disease_names`: List[str] with length N
 
-#### `MelanDx_musk.sh`
-Bash script for running the complete training pipeline with MUSK backbone. Automates:
-- Environment activation
-- Sequential execution of preprocessing, embedding generation, and training stages
-- Error handling and status checking between stages
+Required files:
+- `train_embeddings.pt` - Training set embeddings
+- `val_embeddings.pt` - Validation set embeddings  
+- `test_embeddings.pt` - Test set embeddings
+- `knowledge_embeddings.pt` - Knowledge base embeddings
 
----
+**⚠️ Important: Preparing Your Embeddings**
 
-## Directory Structure
+If you have a single merged embedding file, you MUST split it into train/val/test sets using stratified sampling:
 
-### `/models/`
-
-Core model architecture and components.
-
-#### `main_model.py`
-Main model class (`MainModel`) that orchestrates the complete classification pipeline:
-- Manages disease-to-index mappings
-- Pre-computes label masks for images and knowledge
-- Integrates embedding selection, fusion, and loss computation
-- Implements forward pass with image and knowledge retrieval
-- Provides prediction interface with top-k results and probability distributions
-
-#### `model_components.py`
-Modular components used by the main model:
-- `EmbeddingSelector`: Retrieves similar samples using class-specific attention mechanisms
-- `MultiClassAttention`: Independent attention layers for each disease class
-- `EmbeddingFusion_weighted`: Weighted fusion of embeddings using transformer blocks
-- `LossModule`: Handles loss computation with contrastive learning (basic loss and hierarchical loss options)
-
-#### `model_TransformerAttentionBlock.py`
-Transformer-based attention blocks for embedding fusion:
-
----
-
-### `/data_processing/`
-
-Data loading, validation, and preprocessing.
+```bash
+# Split embeddings with 70/15/15 ratio (stratified by disease label)
+python split_embeddings.py merged_all_embeddings.pt ./output_dir --train_ratio 0.7 --val_ratio 0.15 --test_ratio 0.15
+```
 
 
----
+### 2. Disease Hierarchy JSON (Required)
 
-### `/training/`
+`config/who_44_classes_tree.json` - A 3-level hierarchical structure:
 
-Training loop and evaluation logic.
+```json
+{
+  "Level 2 (Grandparent)": {
+    "Level 3 (Parent)": [
+      "Level 4 (Disease 1)",
+      "Level 4 (Disease 2)",
+      ...
+    ]
+  }
+}
+```
 
-#### `trainer.py`
-Complete training and evaluation pipeline:
-- `TrainerConfig`: Training hyperparameters and settings
-- `PreprocessedImageData`: Custom dataset class for image paths and labels
-- `PreprocessedKnowledgeData`: Knowledge data container
-- `ModelTrainer`: Main trainer class
-  - Manages training loop with early stopping
-  - Handles batch processing and loss computation
-  - Implements evaluation with multiple metrics (top-k accuracy, F1, precision, recall, specificity)
-  - Calculates hierarchical accuracy based on disease taxonomy
-  - Saves checkpoints and metrics to CSV
-  - Saves prediction results with probabilities
-  - Integrates with Weights & Biases for experiment tracking
+**Example:**
+```json
+{
+  "Melanocytic neoplasms in intermittently sun-exposed skin": {
+    "Naevi": [
+      "Junctional, compound, and dermal naevi",
+      "Simple lentigo and lentiginous melanocytic naevus",
+      "Dysplastic naevus"
+    ]
+  }
+}
+```
 
----
 
-### `/utils/`
+## Quick Start
 
-Utility functions and helpers.
+### Method 1: Using Shell Script (Recommended)
 
-#### `scheduler.py`
-Learning rate scheduling:
-- `cosine_lr()`: Implements cosine annealing with warmup for learning rate adjustment
+1. Edit `Melan_Dx_musk.sh` to set your embedding file paths:
 
-#### `early_stopping.py`
-Training optimization:
-- `EarlyStopping`: Monitors validation metrics and stops training when no improvement is observed
-  - Supports both 'min' and 'max' modes for different metrics
-  - Configurable patience and minimum delta
+```bash
+TRAIN_EMBEDDING="/path/to/train_embeddings.pt"
+VAL_EMBEDDING="/path/to/val_embeddings.pt"
+TEST_EMBEDDING="/path/to/test_embeddings.pt"
+KNOWLEDGE_EMBEDDING="/path/to/knowledge_embeddings.pt"
+SAVE_DIR="output_model"
+```
 
-#### `time_utils.py`
-Execution time tracking:
-- `TimeTracker`: Records and saves execution time for different pipeline stages
-  - Tracks individual component timing
-  - Saves statistics to JSON format
+2. Run the script:
 
-#### `seed_utils.py`
-Reproducibility utilities:
-- `set_seed()`: Sets random seeds for Python, NumPy, and PyTorch for reproducible results
+```bash
+bash Melan_Dx_musk.sh
+```
 
----
+### Method 2: Direct Python Execution
 
-### `/backbone_model/`
+```bash
+python train_model.py \
+    --config config/melandx_musk_config.json \
+    --train_embedding /path/to/train_embeddings.pt \
+    --val_embedding /path/to/val_embeddings.pt \
+    --test_embedding /path/to/test_embeddings.pt \
+    --knowledge_embedding /path/to/knowledge_embeddings.pt \
+    --tree_json_path config/who_44_classes_tree.json \
+    --loss_type basic \
+    --learning_rates 1e-5 1e-4 1e-3 \
+    --save_dir output_model
+```
 
-Wrapper classes for pre-trained vision-language models.
 
-#### `plip_for_train.py`
-PLIP (Pathology Language-Image Pretraining) model wrapper:
-- `PLIP`: Wrapper class providing unified interface
-  - `encode_images()`: Batch encoding of images to embeddings
-  - `encode_text()`: Batch encoding of text to embeddings
-  - Handles model initialization and inference
 
-#### `musk_for_train.py`
-MUSK model wrapper:
-- `MUSK`: Wrapper class with similar interface to PLIP
-  - Supports configurable encoding parameters (layer selection, pooling strategy)
-  - `encode_images()`: Image encoding with flexible layer and pooling options
-  - `encode_text()`: Text encoding with similar configurability
+## Output Files
 
----
+After training, the following files will be generated in `{SAVE_DIR}/`:
 
-### `/config/`
+```
+{SAVE_DIR}/
+├── best_model_lr_1e_5.pth          # Best model for each learning rate
+├── val_metrics_lr_1e_5.csv         # Validation metrics per epoch
+├── test_metrics_lr_1e_5.csv        # Test metrics per epoch
+└── predictions/                     # Prediction results
+    ├── val_predictions_epoch_X_lr_1e_5.npz
+    └── test_predictions_epoch_X_lr_1e_5.npz
+```
 
-JSON configuration files for different experiments.
 
-#### `melandx_plip_config.json`
-Configuration for PLIP backbone experiments:
-- Data paths for train/val/test sets and knowledge base
-- Model hyperparameters (embedding dimension, attention heads, retrieval numbers)
-- Trainer settings (batch size, learning rate, epochs)
 
-#### `melandx_musk_config.json`
-Configuration for MUSK backbone experiments:
-- Similar structure to PLIP config
-- Includes encoder-specific settings for MUSK model
+## Data Flow
+
+```
+Input Files
+├── Embedding Files (.pt)
+│   ├── embeddings (Tensor)
+│   └── disease_names (List)
+│
+└── Hierarchy JSON
+    └── 3-level tree structure
+
+        ↓
+
+Automatic Data Structure Construction
+├── train_data
+│   ├── paths: Placeholder list
+│   ├── disease_names: From embedding file
+│   ├── disease_to_parent: Built from JSON
+│   └── parent_to_grandparent: Built from JSON
+│
+├── val_data, test_data
+│   ├── paths: Placeholder list
+│   └── disease_names: From embedding file
+│
+└── knowledge_data
+    ├── texts: Placeholder list
+    └── disease_names: From embedding file
+
+        ↓
+
+Training Loop
+├── Initialize MainModel
+├── Initialize ModelTrainer
+└── Start training iterations
+```
+
+
+
+
+## Embedding Processing Workflow
+
+### Step 1: Split Merged Embeddings (If Needed)
+
+If you have a single merged embedding file, split it into train/val/test:
+
+```bash
+# Basic usage (70/15/15 split)
+python split_embeddings.py merged_all_embeddings.pt ./split_output
+
+# Custom split ratios
+python split_embeddings.py merged_all_embeddings.pt ./split_output \
+    --train_ratio 0.8 --val_ratio 0.1 --test_ratio 0.1 --seed 42
+```
+**Output:**
+```
+./split_output/
+├── train_embeddings.pt
+├── val_embeddings.pt
+└── test_embeddings.pt
+```
+
+### Step 2: Update Training Script
+
+Edit `Melan_Dx_musk.sh` to point to your split embeddings:
+
+```bash
+TRAIN_EMBEDDING="./split_output/train_embeddings.pt"
+VAL_EMBEDDING="./split_output/val_embeddings.pt"
+TEST_EMBEDDING="./split_output/test_embeddings.pt"
+KNOWLEDGE_EMBEDDING="/path/to/knowledge_embeddings.pt"
+```
+
+## Example: Complete Training Workflow
+
+```bash
+# 1. Split embeddings (if needed)
+python split_embeddings.py merged_all_embeddings.pt ./split_output
+
+# 2. Start training
+bash Melan_Dx_musk.sh
+
+# 3. Monitor training progress (if using WandB)
+# Open WandB link in browser
+```
 
