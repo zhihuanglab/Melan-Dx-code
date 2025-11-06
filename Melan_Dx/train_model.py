@@ -62,7 +62,6 @@ def main():
     parser.add_argument('--config', type=str, required=True, help='Path to config file')
     parser.add_argument('--model_checkpoint', type=str, help='Path to model checkpoint')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--plip_orignial_path', type=str, default="/cbica/home/yaoji/Projects/VLM_2_3/checkpoints/plip", help='Path to plip original model to initialize parameters')
     parser.add_argument(
         '--learning_rates', 
         type=float, 
@@ -233,8 +232,7 @@ def train_model_with_embeddings_only(args, model_config, trainer_config,
             backbone_model=None,  # No backbone model needed
             train_data=train_data,
             knowledge_data=knowledge_data,
-            device=device,
-            plip_orignial_path=args.plip_orignial_path
+            device=device
         )
         
         # Load model checkpoint (if available)
