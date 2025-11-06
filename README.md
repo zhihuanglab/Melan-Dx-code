@@ -21,7 +21,7 @@ Required files:
 - `test_embeddings.pt` - Test set embeddings
 - `knowledge_embeddings.pt` - Knowledge base embeddings
 
-**⚠️ Important: Preparing Your Embeddings**
+**Important: Preparing Your Embeddings**
 
 If you have a single merged embedding file, you MUST split it into train/val/test sets using stratified sampling:
 
