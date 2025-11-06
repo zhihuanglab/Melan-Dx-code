@@ -9,8 +9,6 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from backbone_model.plip_for_train import PLIP
-
 
 @dataclass
 class ModelConfig:

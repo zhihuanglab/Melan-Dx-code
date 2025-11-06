@@ -272,19 +272,20 @@ class CLIPTextTransformer(nn.Module):
 
 
 
-class CLIPModel_my(nn.Module):
+class FusionModel(nn.Module):
+    """Transformer-based fusion model for embedding integration"""
 
     def __init__(self, number_hidden_layers=12, embed_dim=None, use_projection=False):
         super().__init__()
         
-        # 添加projection层
+        # Add projection layer
         self.use_projection = use_projection
         if self.use_projection and embed_dim != 512:
             self.input_projection = nn.Linear(embed_dim, 512)
             self.projection_dim = 512
             
-            # 使用与其他线性层相同的初始化方式
-            factor = embed_dim ** -0.5  # 使用输入维度
+            # Use same initialization as other linear layers
+            factor = embed_dim ** -0.5  # Use input dimension
             nn.init.normal_(self.input_projection.weight, std=factor)
             if self.input_projection.bias is not None:
                 nn.init.zeros_(self.input_projection.bias)
@@ -292,7 +293,7 @@ class CLIPModel_my(nn.Module):
             self.input_projection = None
             self.projection_dim = embed_dim
             
-        # 使用投影后的维度
+        # Use projected dimension
         self.text_embed_dim = self.projection_dim
         self.logit_scale_init_value = 2.6592
 
@@ -312,7 +313,7 @@ class CLIPModel_my(nn.Module):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
     ) -> torch.FloatTensor:
-        # 如果需要，先进行projection
+        # Apply projection if needed
         if self.input_projection is not None:
             input_embeds = self.input_projection(input_embeds)
 

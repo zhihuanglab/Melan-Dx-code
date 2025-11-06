@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from typing import List, Dict, Tuple, Optional
 import torch.nn.functional as F
-from .model_TransformerAttentionBlock import CLIPModel_my
+from .model_TransformerAttentionBlock import FusionModel
 from .model_components import (
     ModelConfig,
     EmbeddingSelector,
@@ -10,7 +10,6 @@ from .model_components import (
     EmbeddingFusion_average,
     LossModule
 )
-from backbone_model.plip_for_train import PLIP
 
 
 class MainModel(nn.Module):
@@ -82,11 +81,11 @@ class MainModel(nn.Module):
             self.samples_per_class
         )
         if config.fusion_model == "average":    
-            self.image_fusion = EmbeddingFusion_average(config, CLIPModel_my)
-            self.knowledge_fusion = EmbeddingFusion_average(config, CLIPModel_my)
+            self.image_fusion = EmbeddingFusion_average(config, FusionModel)
+            self.knowledge_fusion = EmbeddingFusion_average(config, FusionModel)
         elif config.fusion_model == "weighted":
-            self.image_fusion = EmbeddingFusion_weighted(config, CLIPModel_my)
-            self.knowledge_fusion = EmbeddingFusion_weighted(config, CLIPModel_my)
+            self.image_fusion = EmbeddingFusion_weighted(config, FusionModel)
+            self.knowledge_fusion = EmbeddingFusion_weighted(config, FusionModel)
         else:
             raise ValueError(f"Invalid fusion model: {config.fusion_model}")
         self.loss_module = LossModule(config)
