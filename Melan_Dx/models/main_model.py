@@ -20,8 +20,7 @@ class MainModel(nn.Module):
             # fusion_model,
             train_data: Dict,
             knowledge_data: Dict,
-            device: str = "cuda",
-            plip_orignial_path: str = "VLM/checkpoints/plip"
+            device: str = "cuda"
     ):
         super().__init__()
         self.config = config
