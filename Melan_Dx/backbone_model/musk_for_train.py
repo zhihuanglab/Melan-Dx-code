@@ -20,12 +20,12 @@ class MUSK:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model_path = model_path
         self.model = self._load_model(model_path)
-        # 确保模型使用float32
+
         self.model = self.model.float()
         self.model = self.model.to(self.device)
         self.logger = logging.getLogger(__name__)
         
-        # MUSK图像预处理
+
         self.preprocess = torchvision.transforms.Compose([
             torchvision.transforms.Resize(384, interpolation=3, antialias=True),
             torchvision.transforms.CenterCrop((384, 384)),
