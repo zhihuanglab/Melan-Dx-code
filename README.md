@@ -1,4 +1,4 @@
-# Melan-Dx Training Framework
+# Melan-Dx Framework
 
 A training framework for melanocytic neoplasm classification using pre-computed embeddings and hierarchical disease taxonomy.
 
