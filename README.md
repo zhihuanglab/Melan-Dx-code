@@ -1,7 +1,21 @@
-# Melan-Dx Framework
+# Melan-Dx: a knowledge-enhanced vision-language framework improves differential diagnosis of melanocytic neoplasm pathology
 
 A training framework for melanocytic neoplasm classification using pre-computed embeddings and hierarchical disease taxonomy.
+## 🔬 Related Publication
 
+This framework accompanies the following peer-reviewed publication:
+
+**Melan-Dx: a knowledge-enhanced vision-language framework improves differential diagnosis of melanocytic neoplasm pathology**
+Jialu Yao, Songhao Li, Peixian Liang, Xiaowei Xu, David Elder, Zhi Huang
+*npj Digital Medicine*, 2026
+
+📄 Paper: https://www.nature.com/articles/s41746-026-02357-3
+
+🔗 DOI: https://doi.org/10.1038/s41746-026-02357-3
+
+If you use this code or the Melan-Dx framework in your research, please cite the paper above.
+
+---
 ## Overview
 
 This version allows you to **train directly from pre-computed embedding files** without data preprocessing or embedding generation steps.
